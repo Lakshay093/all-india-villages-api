@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model State {
+  id        Int        @id
+  name      String
+  districts District[]
+}
+
+model District {
+  id           Int           @id
+  name         String
+  stateId      Int
+  state        State         @relation(fields: [stateId], references: [id])
+  subDistricts SubDistrict[]
+}
+
+model SubDistrict {
+  id         Int        @id
+  name       String
+  districtId Int
+  district   District   @relation(fields: [districtId], references: [id])
+  villages   Village[]
+}
+
+model Village {
+  id            Int         @id
+  name          String
+  subDistrictId Int
+  subDistrict   SubDistrict @relation(fields: [subDistrictId], references: [id])
+}
+
+model B2BUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  company   String
+  plan      String   @default("Free") // "Free", "Pro", "Ultra"
+  apiKeys   ApiKey[]
+  createdAt DateTime @default(now())
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  key       String   @unique // X-API-Key (Plain text or prefix)
+  secret    String   // X-API-Secret (Bcrypt hashed)
+  userId    String
+  user      B2BUser  @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  active    Boolean  @default(true)
+}
